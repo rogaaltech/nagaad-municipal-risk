@@ -19,8 +19,26 @@ let protocolRegistered = false
 function ensurePmtilesProtocol() {
   if (protocolRegistered) return
   const protocol = new Protocol()
-  addProtocol('pmtiles', protocol.tile as Parameters<typeof addProtocol>[1])
+  addProtocol('pmtiles', protocol.tilev4.bind(protocol) as Parameters<typeof addProtocol>[1])
   protocolRegistered = true
+}
+
+const BASEMAP_STYLE = {
+  version: 8 as const,
+  sources: {
+    carto: {
+      type: 'raster' as const,
+      tiles: [
+        'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+      ],
+      tileSize: 256,
+      attribution: '© OpenStreetMap © CARTO',
+      maxzoom: 19,
+    },
+  },
+  layers: [{ id: 'carto', type: 'raster' as const, source: 'carto' }],
 }
 
 export interface MapHandle {
@@ -62,7 +80,7 @@ export const MapView = forwardRef<MapHandle, MapViewProps>(function MapView(
 
     const map = new MapLibreMap({
       container: containerRef.current,
-      style: 'https://tiles.openfreemap.org/styles/positron',
+      style: BASEMAP_STYLE,
       center: city.center,
       zoom: city.zoom,
       minZoom: city.minZoom ?? 10,
@@ -71,6 +89,8 @@ export const MapView = forwardRef<MapHandle, MapViewProps>(function MapView(
     map.addControl(new ScaleControl({ maxWidth: 120 }), 'bottom-left')
     mapRef.current = map
     popupRef.current = new Popup({ closeButton: true, maxWidth: '280px' })
+    const ro = new ResizeObserver(() => map.resize())
+    ro.observe(containerRef.current)
 
     const bindClick = (
       layerId: string,
@@ -94,9 +114,14 @@ export const MapView = forwardRef<MapHandle, MapViewProps>(function MapView(
       })
     }
 
+    map.on('error', (e) => {
+      console.warn('Map error', e.error ?? e)
+    })
+
     map.on('load', () => {
       const firstSymbol = map.getStyle().layers?.find((l: LayerSpecification) => l.type === 'symbol')?.id
       const slug = city.slug
+      try {
 
       map.addSource('flood', {
         type: 'vector',
@@ -306,9 +331,14 @@ export const MapView = forwardRef<MapHandle, MapViewProps>(function MapView(
       for (const [id, on] of Object.entries(layerOn)) {
         setLayerVisibility(map, id, on)
       }
+      map.resize()
+      } catch (err) {
+        console.error('Failed to add risk layers', err)
+      }
     })
 
     return () => {
+      ro.disconnect()
       map.remove()
       mapRef.current = null
       readyRef.current = false

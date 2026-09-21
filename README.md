@@ -42,7 +42,7 @@ This clips the Belet Weyne urban polygon, intersects buildings / roads / IDP sit
 2. Enable Pages (GitHub Actions source). The workflow in `.github/workflows/pages.yml` deploys on push to `main`.
 3. Embed URL:
 
-   `https://<org>.github.io/nagaad-municipal-risk/beledweyne?embed=1`
+   `https://rogaaltech.github.io/nagaad-municipal-risk/beledweyne?embed=1`
 
 4. In Nagaad MIS Admin → Municipal Risk, add that URL with city **Beledweyne**.
 
