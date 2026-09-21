@@ -7,6 +7,7 @@ import {
   addProtocol,
   type GeoJSONSource,
   type MapLayerMouseEvent,
+  type StyleSpecification,
 } from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
 import type { CityConfig } from '../cities/types'
@@ -26,7 +27,7 @@ function absDataUrl(slug: string, file: string) {
   return new URL(dataUrl(slug, file), window.location.href).href
 }
 
-function buildMapStyle(slug: string) {
+function buildMapStyle(slug: string): StyleSpecification {
   return {
     version: 8 as const,
     sources: {
@@ -155,7 +156,7 @@ function buildMapStyle(slug: string) {
         },
       },
     ],
-  }
+  } as StyleSpecification
 }
 
 export interface MapHandle {
