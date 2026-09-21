@@ -1,0 +1,16 @@
+{
+  "city": "Beledweyne",
+  "urbanName": "Belet Weyne",
+  "generatedAt": "2026-09-21T08:00:27Z",
+  "buildingsTotal": 51954,
+  "buildingsInFlood": 47013,
+  "idpSitesTotal": 133,
+  "idpSitesInFlood": 133,
+  "idpIndividualsTotal": 97813.0,
+  "idpIndividualsInFlood": 97813.0,
+  "idpHouseholdsInFlood": 16302.0,
+  "roadsKmTotal": 430.73747435310844,
+  "roadsKmInFlood": 410.29865280621914,
+  "conflictEvents": 515,
+  "floodAreaHa": 5222.554742679148
+}

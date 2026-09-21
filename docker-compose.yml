@@ -1,0 +1,17 @@
+services:
+  etl:
+    build:
+      context: ./etl
+    environment:
+      RAW_DATA: /data/raw
+      OUT_DATA: /data/out
+      CITY_URBAN: Belet Weyne
+      CITY_LABEL: Beledweyne
+    volumes:
+      - type: bind
+        source: ${RAW_DATA_HOST}
+        target: /data/raw
+        read_only: true
+      - type: bind
+        source: ./public/data/beledweyne
+        target: /data/out
