@@ -27,136 +27,20 @@ function absDataUrl(slug: string, file: string) {
   return new URL(dataUrl(slug, file), window.location.href).href
 }
 
-function buildMapStyle(slug: string): StyleSpecification {
-  return {
-    version: 8 as const,
-    sources: {
-      esri: {
-        type: 'raster' as const,
-        tiles: [
-          'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-        ],
-        tileSize: 256,
-        attribution: 'Tiles © Esri — Esri, HERE, Garmin, FAO, NOAA, USGS',
-        maxzoom: 16,
-      },
-      flood: { type: 'vector' as const, url: pmtilesUrl(dataUrl(slug, 'flood.pmtiles')) },
-      buildings: { type: 'vector' as const, url: pmtilesUrl(dataUrl(slug, 'buildings.pmtiles')) },
-      roads: { type: 'vector' as const, url: pmtilesUrl(dataUrl(slug, 'roads.pmtiles')) },
-      boundary: { type: 'geojson' as const, data: absDataUrl(slug, 'boundary.geojson') },
-      river: { type: 'geojson' as const, data: absDataUrl(slug, 'river.geojson') },
-      idps: { type: 'geojson' as const, data: absDataUrl(slug, 'idps.geojson') },
-      conflict: { type: 'geojson' as const, data: absDataUrl(slug, 'conflict.geojson') },
-      investments: {
-        type: 'geojson' as const,
-        data: { type: 'FeatureCollection' as const, features: [] },
-      },
+const BASEMAP_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {
+    esri: {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      ],
+      tileSize: 256,
+      attribution: 'Tiles © Esri — Esri, HERE, Garmin, FAO, NOAA, USGS',
+      maxzoom: 16,
     },
-    layers: [
-      { id: 'esri', type: 'raster' as const, source: 'esri' },
-      {
-        id: 'flood-fill',
-        type: 'fill' as const,
-        source: 'flood',
-        'source-layer': 'flood',
-        paint: { 'fill-color': '#2563eb', 'fill-opacity': 0.32 },
-      },
-      {
-        id: 'buildings-fill',
-        type: 'fill' as const,
-        source: 'buildings',
-        'source-layer': 'buildings',
-        minzoom: 13,
-        paint: {
-          'fill-color': ['case', ['==', ['get', 'inFlood'], 1], '#dc2626', '#a8a29e'],
-          'fill-opacity': 0.75,
-        },
-      },
-      {
-        id: 'buildings-line',
-        type: 'line' as const,
-        source: 'buildings',
-        'source-layer': 'buildings',
-        minzoom: 15,
-        paint: { 'line-color': '#44403c', 'line-width': 0.4, 'line-opacity': 0.5 },
-      },
-      {
-        id: 'roads-line',
-        type: 'line' as const,
-        source: 'roads',
-        'source-layer': 'roads',
-        paint: {
-          'line-color': ['case', ['==', ['get', 'inFlood'], 1], '#b45309', '#57534e'],
-          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 16, 2.2],
-          'line-opacity': 0.85,
-        },
-      },
-      {
-        id: 'river-line',
-        type: 'line' as const,
-        source: 'river',
-        paint: { 'line-color': '#0284c7', 'line-width': 2.4 },
-      },
-      {
-        id: 'boundary-line',
-        type: 'line' as const,
-        source: 'boundary',
-        paint: { 'line-color': '#0f172a', 'line-width': 2, 'line-dasharray': [2, 1] },
-      },
-      {
-        id: 'conflict-circle',
-        type: 'circle' as const,
-        source: 'conflict',
-        paint: {
-          'circle-radius': 5,
-          'circle-color': '#ca8a04',
-          'circle-stroke-width': 1,
-          'circle-stroke-color': '#fff',
-          'circle-opacity': 0.9,
-        },
-      },
-      {
-        id: 'idps-circle',
-        type: 'circle' as const,
-        source: 'idps',
-        paint: {
-          'circle-radius': [
-            'interpolate',
-            ['linear'],
-            ['coalesce', ['to-number', ['get', 'idpIndividuals']], 0],
-            0,
-            4,
-            500,
-            7,
-            2000,
-            12,
-            6000,
-            18,
-          ],
-          'circle-color': [
-            'case',
-            ['==', ['to-number', ['get', 'inFlood']], 1],
-            '#c026d3',
-            '#7c3aed',
-          ],
-          'circle-stroke-width': 1.2,
-          'circle-stroke-color': '#fff',
-          'circle-opacity': 0.92,
-        },
-      },
-      {
-        id: 'investments-circle',
-        type: 'circle' as const,
-        source: 'investments',
-        paint: {
-          'circle-radius': 7,
-          'circle-color': '#059669',
-          'circle-stroke-width': 1.5,
-          'circle-stroke-color': '#fff',
-        },
-      },
-    ],
-  } as StyleSpecification
+  },
+  layers: [{ id: 'esri', type: 'raster', source: 'esri' }],
 }
 
 export interface MapHandle {
@@ -198,7 +82,7 @@ export const MapView = forwardRef<MapHandle, MapViewProps>(function MapView(
 
     const map = new MapLibreMap({
       container: containerRef.current,
-      style: buildMapStyle(city.slug),
+      style: BASEMAP_STYLE,
       center: city.center,
       zoom: city.zoom,
       minZoom: city.minZoom ?? 10,
@@ -237,6 +121,128 @@ export const MapView = forwardRef<MapHandle, MapViewProps>(function MapView(
     })
 
     map.on('load', () => {
+      const slug = city.slug
+      const pmtilesSource = (file: string, minzoom: number, maxzoom: number) => ({
+        type: 'vector' as const,
+        tiles: [`${pmtilesUrl(absDataUrl(slug, file))}/{z}/{x}/{y}`],
+        minzoom,
+        maxzoom,
+      })
+
+      map.addSource('flood', pmtilesSource('flood.pmtiles', 0, 10))
+      map.addSource('buildings', pmtilesSource('buildings.pmtiles', 12, 16))
+      map.addSource('roads', pmtilesSource('roads.pmtiles', 10, 16))
+      map.addSource('boundary', { type: 'geojson', data: absDataUrl(slug, 'boundary.geojson') })
+      map.addSource('river', { type: 'geojson', data: absDataUrl(slug, 'river.geojson') })
+      map.addSource('idps', { type: 'geojson', data: absDataUrl(slug, 'idps.geojson') })
+      map.addSource('conflict', { type: 'geojson', data: absDataUrl(slug, 'conflict.geojson') })
+      map.addSource('investments', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      })
+
+      map.addLayer({
+        id: 'flood-fill',
+        type: 'fill',
+        source: 'flood',
+        'source-layer': 'flood',
+        paint: { 'fill-color': '#2563eb', 'fill-opacity': 0.32 },
+      })
+      map.addLayer({
+        id: 'buildings-fill',
+        type: 'fill',
+        source: 'buildings',
+        'source-layer': 'buildings',
+        minzoom: 13,
+        paint: {
+          'fill-color': ['case', ['==', ['get', 'inFlood'], 1], '#dc2626', '#a8a29e'],
+          'fill-opacity': 0.75,
+        },
+      })
+      map.addLayer({
+        id: 'buildings-line',
+        type: 'line',
+        source: 'buildings',
+        'source-layer': 'buildings',
+        minzoom: 15,
+        paint: { 'line-color': '#44403c', 'line-width': 0.4, 'line-opacity': 0.5 },
+      })
+      map.addLayer({
+        id: 'roads-line',
+        type: 'line',
+        source: 'roads',
+        'source-layer': 'roads',
+        paint: {
+          'line-color': ['case', ['==', ['get', 'inFlood'], 1], '#b45309', '#57534e'],
+          'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.4, 16, 2.2],
+          'line-opacity': 0.85,
+        },
+      })
+      map.addLayer({
+        id: 'river-line',
+        type: 'line',
+        source: 'river',
+        paint: { 'line-color': '#0284c7', 'line-width': 2.4 },
+      })
+      map.addLayer({
+        id: 'boundary-line',
+        type: 'line',
+        source: 'boundary',
+        paint: { 'line-color': '#0f172a', 'line-width': 2, 'line-dasharray': [2, 1] },
+      })
+      map.addLayer({
+        id: 'conflict-circle',
+        type: 'circle',
+        source: 'conflict',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': '#ca8a04',
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#fff',
+          'circle-opacity': 0.9,
+        },
+      })
+      map.addLayer({
+        id: 'idps-circle',
+        type: 'circle',
+        source: 'idps',
+        paint: {
+          'circle-radius': [
+            'interpolate',
+            ['linear'],
+            ['coalesce', ['to-number', ['get', 'idpIndividuals']], 0],
+            0,
+            4,
+            500,
+            7,
+            2000,
+            12,
+            6000,
+            18,
+          ],
+          'circle-color': [
+            'case',
+            ['==', ['to-number', ['get', 'inFlood']], 1],
+            '#c026d3',
+            '#7c3aed',
+          ],
+          'circle-stroke-width': 1.2,
+          'circle-stroke-color': '#fff',
+          'circle-opacity': 0.92,
+        },
+      })
+      map.addLayer({
+        id: 'investments-circle',
+        type: 'circle',
+        source: 'investments',
+        paint: {
+          'circle-radius': 7,
+          'circle-color': '#059669',
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#fff',
+        },
+      })
+
       bindClick(
         'buildings-fill',
         () => 'Building',
