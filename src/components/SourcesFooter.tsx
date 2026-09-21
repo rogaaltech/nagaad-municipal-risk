@@ -15,7 +15,7 @@ export function SourcesFooter({ generatedAt, embed }: SourcesFooterProps) {
         Juba–Shabelle extent clipped to the city, intersected with buildings, roads, and IDP sites.
         Conflict events from ACLED (Raleigh, Linke, Hegre & Karlsen); attribution required.
         Buildings from SURP II footprints; roads from OSM/SURP II; IDP sites from IOM DTM / SURP II.
-        Basemap © OpenStreetMap © CARTO.
+        Basemap tiles © Esri.
         {generatedAt ? ` Data processed ${generatedAt.slice(0, 10)}.` : ''}
       </p>
     </footer>

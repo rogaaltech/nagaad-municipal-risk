@@ -26,19 +26,17 @@ function ensurePmtilesProtocol() {
 const BASEMAP_STYLE = {
   version: 8 as const,
   sources: {
-    carto: {
+    esri: {
       type: 'raster' as const,
       tiles: [
-        'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png',
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
       ],
       tileSize: 256,
-      attribution: '© OpenStreetMap © CARTO',
-      maxzoom: 19,
+      attribution: 'Tiles © Esri — Esri, HERE, Garmin, FAO, NOAA, USGS',
+      maxzoom: 16,
     },
   },
-  layers: [{ id: 'carto', type: 'raster' as const, source: 'carto' }],
+  layers: [{ id: 'esri', type: 'raster' as const, source: 'esri' }],
 }
 
 export interface MapHandle {

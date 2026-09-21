@@ -5,7 +5,7 @@ Standalone, city-scoped risk dashboard (Beledweyne first). It is meant to be **e
 ## Stack
 
 - Vite + React + TypeScript + Tailwind
-- MapLibre GL JS, PMTiles, OpenFreeMap basemap
+- MapLibre GL JS, PMTiles, Esri World Light Gray basemap (no API key)
 - Docker ETL (GDAL/GeoPandas + tippecanoe)
 - GitHub Pages (free, iframe-friendly)
 
