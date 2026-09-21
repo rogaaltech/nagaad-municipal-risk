@@ -256,7 +256,7 @@ def main() -> None:
         flood_geo,
         OUT / "flood.pmtiles",
         "flood",
-        ["-zg", "--no-feature-limit", "--no-tile-size-limit"],
+        ["-Z0", "-z14", "--no-feature-limit", "--no-tile-size-limit"],
     )
     tippecanoe(
         b_geo,
